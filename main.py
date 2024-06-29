@@ -12,7 +12,7 @@ import requests
 
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="!secret")
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "!secret"))
 
 client_id = os.environ.get('GOOGLE_CLIENT_ID')
 client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
