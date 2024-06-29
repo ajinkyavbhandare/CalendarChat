@@ -7,6 +7,9 @@ from starlette.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import HTMLResponse, RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
+from pydantic import BaseModel
+import requests
+
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="!secret")
@@ -60,6 +63,17 @@ async def auth(request: Request):
 async def logout(request: Request):
     request.session.pop('user', None)
     return RedirectResponse(url='/')
+
+class InputText(BaseModel):
+    text: str
+
+@app.post("/echo")
+async def echo_text(input_text: InputText, request: Request):
+    user = request.session.get('user')
+    if not user:
+        raise HTTPException(status_code=401, detail="You need to be logged in to chat.")
+    response = query({"inputs": input_text.text})
+    return {"text": response}
 
 
 if __name__ == '__main__':
