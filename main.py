@@ -12,7 +12,7 @@ import requests
 
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "!secret"))
+app.add_middleware(SessionMiddleware, secret_key="!secret")
 
 API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 headers = {"Authorization": "Bearer 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"}
@@ -20,9 +20,11 @@ def query(payload):
     response = requests.post(API_URL, headers=headers, json=payload)
     return response.json()
 
-client_id = os.environ.get('GOOGLE_CLIENT_ID')
-client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
-oauth = OAuth(Config(secrets={"client_id": client_id, "client_secret": client_secret}))
+os.environ["GOOGLE_CLIENT_ID"] = os.environ.get('GOOGLE_CLIENT_ID')
+os.environ["GOOGLE_CLIENT_SECRET"] = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+config = Config()
+oauth = OAuth(config)
 
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 oauth.register(
