@@ -1,7 +1,7 @@
 # working code
 import os
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from starlette.config import Config
 from starlette.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
