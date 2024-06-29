@@ -1,5 +1,5 @@
 # working code
-
+import os
 import json
 from fastapi import FastAPI
 from starlette.config import Config
@@ -11,8 +11,9 @@ from authlib.integrations.starlette_client import OAuth, OAuthError
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="!secret")
 
-config = Config('.env')
-oauth = OAuth(config)
+client_id = os.environ.get('GOOGLE_CLIENT_ID')
+client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+oauth = OAuth(Config(secrets={"client_id": client_id, "client_secret": client_secret}))
 
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 oauth.register(
