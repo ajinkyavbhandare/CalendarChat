@@ -7,6 +7,8 @@ from starlette.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import HTMLResponse, RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 from pydantic import BaseModel
 import requests
 
@@ -82,6 +84,34 @@ async def echo_text(input_text: InputText, request: Request):
         raise HTTPException(status_code=401, detail="You need to be logged in to chat.")
     response = query({"inputs": input_text.text})
     return {"text": response}
+
+
+@app.get('/cal')
+async def cal(request: Request):
+    user = request.session.get('user')
+    if not user:
+        raise HTTPException(status_code=401, detail="You need to be logged in to access this page.")
+    
+    token = request.session.get('token')
+    if not token:
+        raise HTTPException(status_code=401, detail="Token not found.")
+    
+    # Convert token to credentials
+    credentials = Credentials(
+        token=token['access_token'],
+        refresh_token=token.get('refresh_token'),
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        scopes=['https://www.googleapis.com/auth/calendar']
+    )
+    
+    # Build the calendar service
+    service = build("calendar", "v3", credentials=credentials)
+    
+    # Example of retrieving the list of calendars
+    calendar_list = service.calendarList().list().execute()
+    return HTMLResponse(f'<pre>{json.dumps(calendar_list, indent=2)}</pre><br><a href="/">Home</a>')
 
 
 if __name__ == '__main__':
