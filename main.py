@@ -45,7 +45,7 @@ async def homepage(request: Request):
         data = json.dumps(user)
         html = (
             f'<pre>{data}</pre>'
-            '<a href="/logout">logout</a>'
+            '<a href="/logout">logout</a><br>'
             '<a href="/cal">Google Calendar</a>'
         )
         return HTMLResponse(html)
