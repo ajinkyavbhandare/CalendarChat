@@ -66,6 +66,7 @@ async def auth(request: Request):
     user = token.get('userinfo')
     if user:
         request.session['user'] = dict(user)
+        request.session['token'] = token
     return RedirectResponse(url='/')
 
 
