@@ -46,6 +46,7 @@ async def homepage(request: Request):
         html = (
             f'<pre>{data}</pre>'
             '<a href="/logout">logout</a>'
+            '<a href="/cal">Google Calendar</a>'
         )
         return HTMLResponse(html)
     return HTMLResponse('<a href="/login">login</a>')
