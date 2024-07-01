@@ -8,3 +8,9 @@ google-auth
 google-auth-httplib2
 google-auth-oauthlib
 google-api-python-client
+langchain
+langchain-core
+langchain-google-genai
+langchain-community
+langchain-text-splitters
+langchain-chroma
