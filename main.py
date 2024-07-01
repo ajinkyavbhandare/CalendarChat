@@ -133,7 +133,7 @@ async def echo_text(input_text: InputText, request: Request):
     return {"text": response}
 
 @app.post("/rag")
-async def echo_text(input_text: InputText, request: Request):
+async def rag(input_text: InputText, request: Request):
     user = request.session.get('user')
     if not user:
         raise HTTPException(status_code=401, detail="You need to be logged in to chat.")
