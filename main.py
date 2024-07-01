@@ -12,6 +12,48 @@ from googleapiclient.discovery import build
 from pydantic import BaseModel
 import requests
 
+#-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_chroma import Chroma
+import os
+
+# google genrative embedding model api
+GOOGLE_API_KEY = "AIzaSyDAefyyevUNKa7klQ7GhmVDIH6CzmH9blY"
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+embedding  = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+llm = ChatGoogleGenerativeAI(model="gemini-pro")
+
+
+def ragc(message):
+    loader = TextLoader("data/data.txt")
+    documents = loader.load()
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    docs = text_splitter.split_documents(documents)
+    vectordb = Chroma.from_documents(docs, embedding)
+    retriever = vectordb.as_retriever()
+    template = template = """you are an ai calendar assistant you help user to optimized and to view their schedule with simple language by using above context  :
+    {context}
+    the time gaps which is not shown in the context is unscheduled or the free time for the user with all this information you have to assist the user politely
+    Question: {question}
+    """
+    prompt = ChatPromptTemplate.from_template(template)
+    model = llm
+    chain = (
+        {"context": retriever, "question": RunnablePassthrough()}
+        | prompt
+        | model
+        | StrOutputParser()
+    )
+    response = chain.invoke(message)
+    return response
+#-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
+
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="!secret")
@@ -87,6 +129,14 @@ async def echo_text(input_text: InputText, request: Request):
     response = query({"inputs": input_text.text})
     return {"text": response}
 
+@app.post("/rag")
+async def echo_text(input_text: InputText, request: Request):
+    user = request.session.get('user')
+    if not user:
+        raise HTTPException(status_code=401, detail="You need to be logged in to chat.")
+    response = ragc({input_text.text})
+    return {"text": response}
+    
 
 @app.get('/cal')
 async def cal(request: Request):
