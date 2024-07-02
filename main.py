@@ -52,7 +52,7 @@ def ragc(message, token, filename):
         print(f"Error: File '{file_path}' not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
-    loader = TextLoader("data/data.txt")
+    loader = TextLoader(file_path)
     documents = loader.load()
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     docs = text_splitter.split_documents(documents)
