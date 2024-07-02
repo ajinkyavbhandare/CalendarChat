@@ -11,6 +11,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from pydantic import BaseModel
 import requests
+from datetime import datetime, timezone
+from googleapiclient.errors import HttpError
 
 #-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -33,7 +35,23 @@ embedding  = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
 
-def ragc(message):
+def ragc(message, token, filename):
+    data = data_ingestion(token)
+    temp_dir = "/tmp"
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+    file_path = os.path.join(temp_dir, f"{filename}.txt")
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Existing data in '{file_path}' has been deleted.")
+        with open(file_path, 'w') as file:
+            file.write(data)
+        print(f"Data written successfully to {file_path}")
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
     loader = TextLoader("data/data.txt")
     documents = loader.load()
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
@@ -55,6 +73,65 @@ def ragc(message):
     )
     response = chain.invoke(message)
     return response
+#-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
+# calender data ingestion from the primiary calendarId
+def data_ingestion(token):
+    creds = Credentials(
+    token=token['access_token'],
+    refresh_token=token.get('refresh_token'),
+    token_uri="https://oauth2.googleapis.com/token",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    scopes=['https://www.googleapis.com/auth/calendar']
+    )
+    try:
+        service = build("calendar", "v3", credentials=creds)
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")  
+        events_result = (
+            service.events()
+            .list(
+                calendarId="primary",
+                timeMin=now,
+                maxResults=20,
+                singleEvents=True,
+                orderBy="startTime",).execute())
+        events = events_result.get("items", [])
+        if not events:
+            print("No upcoming events found.")
+            data = "No upcoming events found."
+            return
+        event_data = []
+        for event in events:
+            start = event["start"].get("dateTime", event["start"].get("date"))
+            end = event["end"].get("dateTime", event["end"].get("date"))
+            event_data.append({
+                "start": start,
+                "end": end,
+                "summary": event["summary"]
+            })
+        
+        datal = event_data
+        print(datal)
+        data = str(datal)
+        '''
+        filename = "./data/data.txt"
+        try:
+            if os.path.exists(filename):
+                os.remove(filename)
+                print(f"Existing data in '{filename}' has been deleted.")
+            with open(filename, 'w') as file:
+                file.write(data)
+            print(f"Data written successfully to {filename}")
+        except FileNotFoundError:
+            print(f"Error: File '{filename}' not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        '''   
+    except HttpError as error:
+        data = "An error occurred: {error}"
+        print(f"An error occurred: {error}")
+    return data
+
 #-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
 
 
@@ -112,6 +189,7 @@ async def auth(request: Request):
     user = token.get('userinfo')
     if user:
         request.session['user'] = dict(user)
+        request.session['email'] = user['email']
         request.session['token'] = token
     return RedirectResponse(url='/')
 
@@ -146,28 +224,8 @@ async def cal(request: Request):
     user = request.session.get('user')
     if not user:
         raise HTTPException(status_code=401, detail="You need to be logged in to access this page.")
-    
-    token = request.session.get('token')
-    if not token:
-        raise HTTPException(status_code=401, detail="Token not found.")
-    
-    # Convert token to credentials
-    credentials = Credentials(
-        token=token['access_token'],
-        refresh_token=token.get('refresh_token'),
-        token_uri="https://oauth2.googleapis.com/token",
-        client_id=os.getenv("GOOGLE_CLIENT_ID"),
-        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-        scopes=['https://www.googleapis.com/auth/calendar']
-    )
-    
-    # Build the calendar service
-    service = build("calendar", "v3", credentials=credentials)
-    
-    # Example of retrieving the list of calendars
-    calendar_list = service.calendarList().list().execute()
+    calendar_list = data_ingestion(request.session.get('token'))
     return HTMLResponse(f'<pre>{json.dumps(calendar_list, indent=2)}</pre><br><a href="/">Home</a>')
-
 
 if __name__ == '__main__':
     import uvicorn
