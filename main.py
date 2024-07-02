@@ -177,6 +177,7 @@ async def homepage(request: Request):
 @app.get('/login')
 async def login(request: Request):
     redirect_uri = request.url_for('auth')
+    request.session.clear() # Clear the session before starting the login flow
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
@@ -197,6 +198,7 @@ async def auth(request: Request):
 @app.get('/logout')
 async def logout(request: Request):
     request.session.pop('user', None)
+    request.session.clear() # Clear the session on logout
     return RedirectResponse(url='/')
 
 class InputText(BaseModel):
