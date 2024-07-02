@@ -22,6 +22,7 @@ from langchain_text_splitters import CharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
 import pysqlite3
 import sys
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
@@ -33,6 +34,52 @@ GOOGLE_API_KEY = "AIzaSyDAefyyevUNKa7klQ7GhmVDIH6CzmH9blY"
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 embedding  = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 llm = ChatGoogleGenerativeAI(model="gemini-pro")
+
+#-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
+def parse_workshop_details(workshop_str):
+    workshop_parts = workshop_str.split()
+    title = workshop_parts[0]
+    start_time, end_time = workshop_parts[1:]
+    return title, start_time, end_time
+
+def schedule_event(calendar_id, service, title, start_datetime, end_datetime):
+    event = {'summary': title,'start': {'dateTime': start_datetime,},'end': {'dateTime': end_datetime,}}
+    service.events().insert(calendarId=calendar_id, body=event).execute()
+    response = "Event "+title+" created successfully!"
+    return response
+
+def sch(question): 
+    prompt = PromptTemplate.from_template('''
+                    "you are a ai who does the nemed entity recongintion and convert it to the given format"
+                    "example quetion: schedula a event named meeting on the 4 july at 10 am for one hour"
+                    "format: event-name start-time end-time"
+                    "answer format: Meeting 2024-04-04T10:00:00+05:30 2024-04-04T11:00:00+05:30 "
+                    "convert this: {question}" 
+                    "separte this three values with space"
+                    strictly follow the answer format:  event name without space use _ in place of space 2024-MM-DDTHH:MM:SS+05:30 2024-MM-DDTHH:MM:SS+05:30''')
+    messages = prompt.format(question=question)
+    result = llm.invoke(messages)
+    return result
+def chat(message, token, filename):
+    string = message
+    creds = Credentials(
+        token=token['access_token'],
+        refresh_token=token.get('refresh_token'),
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        scopes=['https://www.googleapis.com/auth/calendar']
+        )
+    if string.startswith("/sch"):
+        service = build('calendar', 'v3', credentials=creds)
+        calendar_id = 'primary'
+        result = sch(message)
+        title, start_datetime, end_datetime = parse_workshop_details(result.content)
+        response = schedule_event(calendar_id, service, title, start_datetime, end_datetime)
+    else:
+        response = ragc(message, token, filename)
+    return response
+#-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
 
 
 def ragc(message, token, filename):
@@ -217,7 +264,7 @@ async def chat(input_text: InputText, request: Request):
     user = request.session.get('user')
     if not user:
         raise HTTPException(status_code=401, detail="You need to be logged in to chat.")
-    response = ragc(input_text.text, token=request.session.get('token'), filename=request.session.get('email'))
+    response = chat(input_text.text, token=request.session.get('token'), filename=request.session.get('email'))
     return {"text": response}
     
 
