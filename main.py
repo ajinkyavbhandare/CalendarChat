@@ -60,7 +60,7 @@ def sch(question):
     messages = prompt.format(question=question)
     result = llm.invoke(messages)
     return result
-def chat(message, token, filename):
+def mainChat(message, token, filename):
     string = message
     creds = Credentials(
         token=token['access_token'],
@@ -264,7 +264,7 @@ async def chat(input_text: InputText, request: Request):
     user = request.session.get('user')
     if not user:
         raise HTTPException(status_code=401, detail="You need to be logged in to chat.")
-    response = chat(input_text.text, token=request.session.get('token'), filename=request.session.get('email'))
+    response = mainChat(input_text.text, token=request.session.get('token'), filename=request.session.get('email'))
     return {"text": response}
     
 
