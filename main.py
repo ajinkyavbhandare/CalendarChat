@@ -137,7 +137,7 @@ async def rag(input_text: InputText, request: Request):
     user = request.session.get('user')
     if not user:
         raise HTTPException(status_code=401, detail="You need to be logged in to chat.")
-    response = ragc({input_text.text})
+    response = ragc(input_text.text)
     return {"text": response}
     
 
