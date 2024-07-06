@@ -13,6 +13,8 @@ from pydantic import BaseModel
 import requests
 from datetime import datetime, timezone
 from googleapiclient.errors import HttpError
+from starlette.middleware.cors import CORSMiddleware
+from typing import List, Optional
 
 #-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -184,6 +186,13 @@ def data_ingestion(token):
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="!secret")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5500"],  # Note: changed from 127.0.0.1 to localhost
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 headers = {"Authorization": "Bearer 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"}
@@ -233,13 +242,18 @@ async def auth(request: Request):
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as error:
-        return HTMLResponse(f'<h1>{error.error}</h1>')
+        raise HTTPException(status_code=400, detail=f"OAuth Error: {error.error}")
     user = token.get('userinfo')
     if user:
         request.session['user'] = dict(user)
         request.session['email'] = user['email']
         request.session['token'] = token
-    return RedirectResponse(url='/')
+    return HTMLResponse(content=f"""
+        <script>
+            window.opener.postMessage({json.dumps(token)}, '*');
+            window.close();
+        </script>
+    """)
 
 
 @app.get('/logout')
@@ -275,6 +289,47 @@ async def cal(request: Request):
         raise HTTPException(status_code=401, detail="You need to be logged in to access this page.")
     calendar_list = data_ingestion(request.session.get('token'))
     return HTMLResponse(f'<pre>{json.dumps(calendar_list, indent=2)}</pre><br><a href="/">Home</a>')
+
+class UserInfo(BaseModel):
+    iss: str
+    azp: str
+    aud: str
+    sub: str
+    email: str
+    email_verified: bool
+    at_hash: str
+    nonce: str
+    name: str
+    picture: str
+    given_name: str
+    family_name: str
+    iat: int
+    exp: int
+
+class TokenPayload(BaseModel):
+    access_token: str
+    expires_in: int
+    scope: str
+    token_type: str
+    id_token: str
+    expires_at: int
+    userinfo: UserInfo
+
+@app.post("/token-dict")
+async def receive_token_dict(token_payload: TokenPayload):
+    try:
+        token = token_payload.dict()
+        response = data_ingestion(token)
+        return response
+    except Exception as e:
+        print(f"Error processing token: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error processing token: {str(e)}")
+
+@app.post("/mainapi")
+async def chat(token_payload: TokenPayload, input_text: InputText):
+    token = token_payload.dict()
+    response = mainChat(token, input_text.text)
+    return {"text": response}
 
 if __name__ == '__main__':
     import uvicorn
