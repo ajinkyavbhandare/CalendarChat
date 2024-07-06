@@ -328,7 +328,8 @@ async def receive_token_dict(token_payload: TokenPayload):
 @app.post("/mainapi")
 async def chat(token_payload: TokenPayload, input_text: InputText):
     token = token_payload.dict()
-    response = mainChat(token, input_text.text)
+    filename = token['userinfo']['email']
+    response = mainChat(input_text.text, token, filename)
     return {"text": response}
 
 if __name__ == '__main__':
