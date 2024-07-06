@@ -188,7 +188,7 @@ app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="!secret")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5500"],  # Note: changed from 127.0.0.1 to localhost
+    allow_origins=["http://localhost:5500", "https://ajinkyavbhandare.github.io/website", "https://ajinkyavbhandare.github.io"],  # Note: changed from 127.0.0.1 to localhost
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
