@@ -219,8 +219,9 @@ oauth.register(
 @app.get('/')
 async def homepage(request: Request):
     user = request.session.get('user')
+    token = request.session.get('token')
     if user:
-        data = json.dumps(user)
+        data = json.dumps({"user": user, "token": token}, indent=2)
         html = (
             f'<pre>{data}</pre>'
             '<a href="/logout">logout</a><br>'
