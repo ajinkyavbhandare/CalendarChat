@@ -11,6 +11,8 @@ Traditional calendar systems often prove cumbersome, requiring manual input and 
 - Integration of Gemini API for expanded functionalities and data retrieval.
 - Personalized Google Calendar responses to optimize scheduling and productivity.
 
+![index.html](https://github.com/ajinkyavbhandare/FastAPI_Oauth/blob/main/images/demo.jpeg)
+
 ## Technologies Used
 - fastapi
 - google oauth
