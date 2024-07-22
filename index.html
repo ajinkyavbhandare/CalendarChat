@@ -1,8 +1,292 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Calendar Chatbot</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #ffffff;
+            color: #333;
+        }
+        .sidebar {
+            width: 300px;
+            background-color: #f0f0f0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        .sidebar button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2e2e2e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .sidebar button:hover {
+            background-color: #2e2e2e;
+        }
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .home-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .home-container h1 {
+            margin-bottom: 20px;
+            font-size: 32px;
+            color: #333;
+        }
+        .home-container p {
+            font-size: 18px;
+            color: #666;
+        }
+        .chat-container {
+            flex-grow: 1;
+            background-color: #e5ddd5;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .input-container {
+            display: flex;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        #userInput {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2e2e2e;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2e2e2e;
+        }
+        .message {
+            max-width: 60%;
+            margin: 5px 0;
+            word-wrap: break-word;
+        }
+        .you-message {
+            align-self: flex-end;
+        }
+        .bot-message, .system-message {
+            align-self: flex-start;
+        }
+        .message-content {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 15px;
+        }
+        .you-message .message-content {
+            background-color: #dcf8c6;
+        }
+        .bot-message .message-content, .system-message .message-content {
+            background-color: #fff;
+        }
+    </style>
+</head>
 <body>
+    <div class="sidebar">
+        <h2>Google Calendar Chatbot</h2>
+        <button id="authButton" onclick="loginWithGoogle()">Login with Google</button>
+    </div>
+    <div class="main-content">
+        <div class="home-container" id="homeContainer">
+            <h1>Welcome to Google Calendar Chatbot</h1>
+            <p>Your personal assistant to manage and summarize your Google Calendar events.</p>
+        </div>
+        <div class="chat-container" id="chatContainer"></div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your message here...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
 
-<h1>hello</h1>
+    <script>
+        function loginWithGoogle() {
+            localStorage.removeItem('chatHistory');
+            const popup = window.open('https://fastapi-oauth.onrender.com/login', 'Login', 'width=500,height=600');
+            window.addEventListener('message', handleTokenMessage);
+        }
 
+        function handleTokenMessage(event) {
+            if (event.origin !== "https://fastapi-oauth.onrender.com") return;
+            const token = event.data;
+            localStorage.setItem('token', JSON.stringify(token));
+            displayMessage("System", "Logged in successfully. You can now interact with your Google Calendar.\n\n**Commands:**\n- /sch : to schedule an event");
+            showChatPage();
+        }
+
+        function fetchChat(token, message) {
+            fetch('https://fastapi-oauth.onrender.com/mainapi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                mode: 'cors',
+                credentials: 'include',
+                body: JSON.stringify({
+                    "token_payload": token,
+                    "input_text": {"text": message}
+                })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.text) {
+                    displayMessage("Bot", data.text);
+                } else {
+                    displayMessage("Bot", "Received an empty or invalid response from the server.");
+                }
+            })
+            .catch(error => {
+                console.error("Fetch error:", error);
+                displayMessage("System", `Error: ${error.message}`);
+            });
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            if (message) {
+                displayMessage("You", message);
+                const token = JSON.parse(localStorage.getItem('token'));
+                if (token) {
+                    fetchChat(token, message);
+                } else {
+                    displayMessage("System", "Please log in first.");
+                }
+                userInput.value = '';
+            }
+        }
+
+        function displayMessage(sender, message, save = true) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${sender.toLowerCase().replace(" ", "-")}-message`;
+
+            const contentElement = document.createElement('div');
+            contentElement.className = 'message-content';
+
+            if (sender.toLowerCase() === 'you') {
+                contentElement.textContent = message;
+            } else {
+                contentElement.innerHTML = marked.parse(message);
+            }
+
+            messageElement.appendChild(contentElement);
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            if (save) {
+                saveChatHistory({ sender, content: message });
+            }
+        }
+
+
+        function saveChatHistory(message) {
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            chatHistory.push(message);
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        }
+
+        function loadChatHistory() {
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            chatHistory.forEach(message => {
+                displayMessage(message.sender, message.content, false);
+            });
+        }
+
+        function showLogoutButton() {
+            const authButton = document.getElementById('authButton');
+            authButton.textContent = "Logout";
+            authButton.onclick = logout;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('chatHistory');
+            displayMessage("System", "Logged out successfully.");
+            const authButton = document.getElementById('authButton');
+            authButton.textContent = "Login with Google";
+            authButton.onclick = loginWithGoogle;
+            showHomePage();
+        }
+
+        function showHomePage() {
+            document.getElementById('homeContainer').style.display = 'flex';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.querySelector('.input-container').style.display = 'none';
+        }
+
+        function showChatPage() {
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'flex';
+            document.querySelector('.input-container').style.display = 'flex';
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                showLogoutButton();
+                showChatPage();
+            }
+            loadChatHistory();
+        };
+    </script>
 </body>
 </html>
