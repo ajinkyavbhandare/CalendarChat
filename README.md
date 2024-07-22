@@ -1,4 +1,4 @@
-# CalenderChat
+# CalendarChat
 
 
 ## Description:<br>
@@ -19,7 +19,8 @@ Traditional calendar systems often prove cumbersome, requiring manual input and 
 - Python
 - Langchain
 - Gemini pro
-- gemini embedding model<br>
+- gemini embedding model
+- chroma db<br>
 
 ## Installation and Setup
 
