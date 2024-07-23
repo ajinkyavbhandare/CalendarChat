@@ -1,20 +1,27 @@
 # CalendarChat
 
-[visit here](https://ajinkyavbhandare.github.io/CalendarChat/)
-
-## Description:<br>
+## Project Overview:<br>
 
 The Custom Chatbox Application is a Python-based application powered by fastapi, integrating Langchain and the Gemini API to deliver an engaging chat experience. Through seamless integration with Google Calendar, users can interact with the application to receive personalized responses and efficiently manage their schedules.
-Traditional calendar systems often prove cumbersome, requiring manual input and lacking in efficiency. To address these limitations, this project introduces an AI-driven calendar assistant aimed at enhancing productivity and simplifying calendar management. By leveraging automation and intuitive design, the assistant offers users a streamlined experience, empowering them to make the most of their time.
+Traditional calendar systems often prove cumbersome, requiring manual input and lacking in efficiency. To address these limitations, this project introduces an AI-driven calendar assistant aimed at enhancing productivity and simplifying calendar management. By leveraging automation and intuitive design, the assistant offers users a streamlined experience, empowering them to make the most of their time. [visit here](https://ajinkyavbhandare.github.io/CalendarChat/)
 
-## Features
+## Table of Contents
+- [Project Overview](##project-overview)
+- [Table of Contents](##table-of-contents)
+- [Architecture](##Architecture)
+- [Installation and Setup](##installation-and-setup)
+- [Improvements](##improvements)
+- [Acknowledgements](##acknowledgements)
+
+## Architecture
+### Features
 - Natural language interaction via Langchain for intuitive communication.
 - Integration of Gemini API for expanded functionalities and data retrieval.
 - Personalized Google Calendar responses to optimize scheduling and productivity.
 
 ![index.html](https://github.com/ajinkyavbhandare/FastAPI_Oauth/blob/main/images/demo.jpeg)
 
-## Technologies Used
+### Technologies Used
 - fastapi
 - google oauth
 - Python
@@ -56,6 +63,8 @@ Open your browser and visit http://localhost:8000/docs to access the API.
 
 ## Improvements
 
+## Acknowledgements
+1. [fastapi-google-login](https://github.com/authlib/demo-oauth-client/tree/master/fastapi-google-login)
 
 
 
