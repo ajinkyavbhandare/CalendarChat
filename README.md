@@ -7,11 +7,11 @@ Traditional calendar systems often prove cumbersome, requiring manual input and 
 
 ## Table of Contents
 - [Project Overview](#Project-Overview)
-- [Table of Contents](##table-of-contents)
-- [Architecture](##Architecture)
-- [Installation and Setup](##installation-and-setup)
-- [Improvements](##improvements)
-- [Acknowledgements](##acknowledgements)
+- [Table of Contents](#Table-of-Contents)
+- [Architecture](#Architecture)
+- [Installation and Setup](#Installation-and-Setup)
+- [Improvements](#Improvements)
+- [Acknowledgements](#Acknowledgements)
 
 ## Architecture
 ### Features
