@@ -6,7 +6,7 @@ The Custom Chatbox Application is a Python-based application powered by fastapi,
 Traditional calendar systems often prove cumbersome, requiring manual input and lacking in efficiency. To address these limitations, this project introduces an AI-driven calendar assistant aimed at enhancing productivity and simplifying calendar management. By leveraging automation and intuitive design, the assistant offers users a streamlined experience, empowering them to make the most of their time. [visit here](https://ajinkyavbhandare.github.io/CalendarChat/)
 
 ## Table of Contents
-- [Project Overview](## Project-Overview)
+- [Project Overview](#Project-Overview)
 - [Table of Contents](##table-of-contents)
 - [Architecture](##Architecture)
 - [Installation and Setup](##installation-and-setup)
