@@ -49,7 +49,7 @@ pip install -r requirements.txt
 Usage
 Run the application:
 ```python
-uvicorn api:app --reload
+uvicorn main:app --reload
 ```
 
 Open your browser and visit http://localhost:8000/docs to access the API.
