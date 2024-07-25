@@ -32,8 +32,7 @@ from langchain_chroma import Chroma
 import os
 
 # google genrative embedding model api
-os.environ["GOOGLE_CLIENT_ID"] = os.environ.get('GOOGLE_API_KEY')
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
 embedding  = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
