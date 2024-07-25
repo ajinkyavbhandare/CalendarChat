@@ -86,6 +86,8 @@ def mainChat(message, token, filename):
 
 def ragc(message, token, filename):
     data = data_ingestion(token)
+    if data == "null" or not data:
+        return "There are no events in the calendar. Please check your calendar or try logging in again.."
     temp_dir = "/tmp"
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
@@ -177,7 +179,7 @@ def data_ingestion(token):
             print(f"An error occurred: {e}")
         '''   
     except HttpError as error:
-        data = "An error occurred: {error}"
+        data = "null"
         print(f"An error occurred: {error}")
     return data
 
